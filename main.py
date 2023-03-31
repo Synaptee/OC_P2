@@ -37,6 +37,19 @@ def convert_rating(txt):
         return 0
 
 
+def convert_stock(txt):
+    stock = ""
+    for char in txt:
+        if char.isdigit():
+            stock += char
+
+    if stock:
+        stock = int(stock)
+        return stock
+    else:
+        return 0
+
+
 def scrape_url(url_to_scrape) -> list:
     """Fonction qui reçoit une URL en paramètre et qui retourne une liste contenant l'ensemble des éléments demandés"""
     soup = bs_get(url_to_scrape)
@@ -46,7 +59,7 @@ def scrape_url(url_to_scrape) -> list:
     title = soup.find('h1').get_text()
     price_notax = soup.find('th', string='Price (excl. tax)').find_next_sibling('td').get_text()
     price_tax = soup.find('th', string='Price (incl. tax)').find_next_sibling('td').get_text()
-    availability = soup.find('th', string='Availability').find_next_sibling('td').get_text()
+    availability = convert_stock(soup.find('th', string='Availability').find_next_sibling('td').get_text())
     try:
         description = soup.find('div', id='product_description').find_next('p').get_text()
     except:
