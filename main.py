@@ -13,6 +13,13 @@ def bs_get(url_to_scrape):
         print(f"Une erreur est survenue : {err} ")
 
 
+def load_img(img, nom_img):
+    """Fonction qui télécharge l'image d'une URL donnée et la stock dans le répertoire courant"""
+    response = requests.get(img)
+    with open(nom_img, "wb") as f:
+        f.write(response.content)
+
+
 def scrape_url(url_to_scrape) -> list:
     """Fonction qui reçoit une URL en paramètre et qui retourne une liste contenant l'ensemble des éléments demandés"""
     soup = bs_get(url_to_scrape)
@@ -29,6 +36,12 @@ def scrape_url(url_to_scrape) -> list:
     rating_class = rating_init['class']  # Je récupère le nom de la classe qui est en fait une liste
     rating = rating_class[1]  # Je récupère le second élément de la liste
     img = 'http://books.toscrape.com/' + soup.select('img')[0]['src']
+
+    nom_img = category + "_" + title + ".jpg"
+    try:
+        load_img(img, nom_img)
+    except Exception as err:
+        print(f"Une erreur est survenue dans le téléchargement de l'image: {err} ")
 
     datas = [upc, title, price_notax, price_tax, availability, description, category, rating, img]
 
