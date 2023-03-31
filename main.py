@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
+from slugify import slugify
 
 session = requests.session()
 
@@ -37,7 +38,7 @@ def scrape_url(url_to_scrape) -> list:
     rating = rating_class[1]  # Je récupère le second élément de la liste
     img = 'http://books.toscrape.com/' + soup.select('img')[0]['src']
 
-    nom_img = category + "_" + title + ".jpg"
+    nom_img = slugify(category+" "+title, separator="_") + ".jpg"
     try:
         load_img(img, nom_img)
     except Exception as err:
