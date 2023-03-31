@@ -22,6 +22,21 @@ def load_img(img, nom_img):
         f.write(response.content)
 
 
+def convert_rating(txt):
+    if txt == "One":
+        return 1
+    elif txt == "Two":
+        return 2
+    elif txt == "Three":
+        return 3
+    elif txt == "Four":
+        return 4
+    elif txt == "Five":
+        return 5
+    else:
+        return 0
+
+
 def scrape_url(url_to_scrape) -> list:
     """Fonction qui reçoit une URL en paramètre et qui retourne une liste contenant l'ensemble des éléments demandés"""
     soup = bs_get(url_to_scrape)
@@ -39,7 +54,7 @@ def scrape_url(url_to_scrape) -> list:
     category = soup.select('.breadcrumb > li > a')[-1].get_text()
     rating_init = soup.find('p', class_='star-rating')  # Renvoie tout le code HTML
     rating_class = rating_init['class']  # Je récupère le nom de la classe qui est en fait une liste
-    rating = rating_class[1]  # Je récupère le second élément de la liste
+    rating = convert_rating(rating_class[1])  # Je récupère le second élément de la liste
     img = 'http://books.toscrape.com/' + soup.select('img')[0]['src']
 
     nom_img = slugify(category + " " + title, separator="_") + ".jpg"
