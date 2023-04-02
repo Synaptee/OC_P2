@@ -2,6 +2,8 @@ from bs4 import BeautifulSoup
 import requests
 from slugify import slugify
 import csv
+from pathlib import Path
+import os
 
 session = requests.session()
 
@@ -15,10 +17,11 @@ def bs_get(url_to_scrape):
         print(f"Une erreur est survenue : {err} ")
 
 
-def load_img(img, nom_img):
+def load_img(img, nom_img, categ):
     """Fonction qui télécharge l'image d'une URL donnée et la stock dans le répertoire courant"""
     response = requests.get(img)
-    with open(nom_img, "wb") as f:
+    file_img = os.path.join(categ, nom_img)
+    with open(file_img, "wb") as f:
         f.write(response.content)
 
 
@@ -76,9 +79,9 @@ def scrape_url(url_to_scrape) -> dict:
     img = 'http://books.toscrape.com/' + soup.select('img')[0]['src']
     datas['image_url'] = img
 
-    nom_img = slugify(category + " " + title, separator="_") + ".jpg"
+    nom_img = slugify(title, separator="_") + ".jpg"
     try:
-        load_img(img, nom_img)
+        load_img(img, nom_img, category)
     except Exception as err:
         print(f"Une erreur est survenue dans le téléchargement de l'image: {err} ")
 
@@ -86,7 +89,7 @@ def scrape_url(url_to_scrape) -> dict:
 
 
 def categ_to_scrape(base_url, categ):
-    filecsv = categ + ".csv"
+    filecsv = os.path.join(categ, f'{categ}.csv')
     datas = []
     champs = ['product_page_url', 'universal_product_code', 'title', 'price_including_tax', 'price_excluding_tax',
               'number_available', 'product_description', 'category', 'review_rating', 'image_url']
@@ -111,8 +114,6 @@ def categ_to_scrape(base_url, categ):
                 nb += 1
                 data = scrape_url(url_book)
                 datas.append(data)
-                #writer = csv.writer(f)
-                #writer.writerow(datas)
 
             # Récupération du lien de la page suivante
             next_page = soup.select_one('li.next a')
@@ -137,8 +138,11 @@ def main():
 
     for category_link in category_links:
         categ = category_link.get_text().strip()
+        directory = Path(f'./{categ}')
+        if not directory.exists():
+            directory.mkdir(parents=True, exist_ok=True)
+
         url = base_url + category_link['href']
-        # print(url)
         categ_to_scrape(url[:-10], categ)
 
 
