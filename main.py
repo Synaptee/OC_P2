@@ -20,7 +20,7 @@ def bs_get(url_to_scrape):
 def load_img(img, nom_img, categ):
     """Fonction qui télécharge l'image d'une URL donnée et la stock dans le répertoire courant"""
     response = requests.get(img)
-    file_img = os.path.join(categ, nom_img)
+    file_img = os.path.join(slugify(categ, separator="_"), nom_img)
     with open(file_img, "wb") as f:
         f.write(response.content)
 
@@ -47,7 +47,6 @@ def scrape_url(url_to_scrape) -> dict:
     """Fonction qui reçoit une URL en paramètre et qui retourne un dictionnaire contenant l'ensemble des éléments demandés"""
     soup = bs_get(url_to_scrape)
     datas = {}
-
     # Recuperation des different donnes demandées et stockage dans des variables
     datas['product_page_url'] = url_to_scrape
     datas['universal_product_code'] = soup.find('th', string='UPC').find_next_sibling('td').get_text()
@@ -79,14 +78,11 @@ def scrape_url(url_to_scrape) -> dict:
 
 
 def categ_to_scrape(base_url, categ):
-    filecsv = os.path.join(categ, f'{categ}.csv')
+    filecsv = os.path.join(slugify(categ, separator="_"), f'{categ}.csv')
     datas = []
     champs = ['product_page_url', 'universal_product_code', 'title', 'price_including_tax', 'price_excluding_tax',
               'number_available', 'product_description', 'category', 'review_rating', 'image_url']
     with open(filecsv, mode='w', newline='') as f:
-
-        nb = 0
-
         # URL de la première page de la catégorie de livres
         url = base_url + 'index.html'
 
@@ -101,7 +97,6 @@ def categ_to_scrape(base_url, categ):
             books = soup.select('article.product_pod')
             for book in books:
                 url_book = basik_url + book.h3.a['href'][8:]
-                nb += 1
                 data = scrape_url(url_book)
                 datas.append(data)
 
@@ -112,8 +107,6 @@ def categ_to_scrape(base_url, categ):
                 url = base_url + next_page['href']
             else:
                 url = None
-
-        print(nb)
 
         writer = csv.DictWriter(f, fieldnames=champs)
         writer.writeheader()
@@ -128,7 +121,8 @@ def main():
 
     for category_link in category_links:
         categ = category_link.get_text().strip()
-        directory = Path(f'./{categ}')
+        categ_slugged = slugify(categ, separator="_")
+        directory = Path(f'./{categ_slugged}')
         if not directory.exists():
             directory.mkdir(parents=True, exist_ok=True)
 
