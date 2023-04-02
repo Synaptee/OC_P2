@@ -50,25 +50,31 @@ def convert_stock(txt):
         return 0
 
 
-def scrape_url(url_to_scrape) -> list:
-    """Fonction qui reçoit une URL en paramètre et qui retourne une liste contenant l'ensemble des éléments demandés"""
+def scrape_url(url_to_scrape) -> dict:
+    """Fonction qui reçoit une URL en paramètre et qui retourne un dictionnaire contenant l'ensemble des éléments demandés"""
     soup = bs_get(url_to_scrape)
+    datas = {}
 
     # Recuperation des different donnes demandées et stockage dans des variables
-    upc = soup.find('th', string='UPC').find_next_sibling('td').get_text()
+    datas['product_page_url'] = url_to_scrape
+    datas['universal_product_code'] = soup.find('th', string='UPC').find_next_sibling('td').get_text()
     title = soup.find('h1').get_text()
-    price_notax = soup.find('th', string='Price (excl. tax)').find_next_sibling('td').get_text()
-    price_tax = soup.find('th', string='Price (incl. tax)').find_next_sibling('td').get_text()
-    availability = convert_stock(soup.find('th', string='Availability').find_next_sibling('td').get_text())
+    datas['title'] = title
+    datas['price_including_tax'] = soup.find('th', string='Price (incl. tax)').find_next_sibling('td').get_text()
+    datas['price_excluding_tax'] = soup.find('th', string='Price (excl. tax)').find_next_sibling('td').get_text()
+
+    datas['number_available'] = convert_stock(soup.find('th', string='Availability').find_next_sibling('td').get_text())
     try:
-        description = soup.find('div', id='product_description').find_next('p').get_text()
+        datas['product_description'] = soup.find('div', id='product_description').find_next('p').get_text()
     except:
-        description = "Ce livre n'a pas de description"
+        datas['product_description'] = "Ce livre n'a pas de description"
     category = soup.select('.breadcrumb > li > a')[-1].get_text()
+    datas['category'] = category
     rating_init = soup.find('p', class_='star-rating')  # Renvoie tout le code HTML
     rating_class = rating_init['class']  # Je récupère le nom de la classe qui est en fait une liste
-    rating = convert_rating(rating_class[1])  # Je récupère le second élément de la liste
+    datas['review_rating'] = convert_rating(rating_class[1])  # Je récupère le second élément de la liste
     img = 'http://books.toscrape.com/' + soup.select('img')[0]['src']
+    datas['image_url'] = img
 
     nom_img = slugify(category + " " + title, separator="_") + ".jpg"
     try:
@@ -76,14 +82,15 @@ def scrape_url(url_to_scrape) -> list:
     except Exception as err:
         print(f"Une erreur est survenue dans le téléchargement de l'image: {err} ")
 
-    datas = [upc, title, price_notax, price_tax, availability, description, category, rating, img]
-
     return datas
 
 
 def categ_to_scrape(base_url, categ):
     filecsv = categ + ".csv"
-    with open(filecsv, 'a') as f:
+    datas = []
+    champs = ['product_page_url', 'universal_product_code', 'title', 'price_including_tax', 'price_excluding_tax',
+              'number_available', 'product_description', 'category', 'review_rating', 'image_url']
+    with open(filecsv, mode='w', newline='') as f:
 
         nb = 0
 
@@ -102,9 +109,10 @@ def categ_to_scrape(base_url, categ):
             for book in books:
                 url_book = basik_url + book.h3.a['href'][8:]
                 nb += 1
-                datas = scrape_url(url_book)
-                writer = csv.writer(f)
-                writer.writerow(datas)
+                data = scrape_url(url_book)
+                datas.append(data)
+                #writer = csv.writer(f)
+                #writer.writerow(datas)
 
             # Récupération du lien de la page suivante
             next_page = soup.select_one('li.next a')
@@ -115,6 +123,10 @@ def categ_to_scrape(base_url, categ):
                 url = None
 
         print(nb)
+
+        writer = csv.DictWriter(f, fieldnames=champs)
+        writer.writeheader()
+        writer.writerows(datas)
 
 
 def main():
@@ -132,3 +144,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    print("Fin d'exécution du programme")
