@@ -26,18 +26,8 @@ def load_img(img, nom_img, categ):
 
 
 def convert_rating(txt):
-    if txt == "One":
-        return 1
-    elif txt == "Two":
-        return 2
-    elif txt == "Three":
-        return 3
-    elif txt == "Four":
-        return 4
-    elif txt == "Five":
-        return 5
-    else:
-        return 0
+    ratings = {'One': 1, 'Two': 2, 'Three': 3, 'Four': 4, 'Five': 5}
+    return ratings.get(txt, 0)
 
 
 def convert_stock(txt):
