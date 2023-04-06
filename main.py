@@ -20,10 +20,21 @@ def bs_get(url_to_scrape):
 
 def load_img(img, nom_img, categ):
     """Fonction qui télécharge l'image d'une URL donnée et la stock dans le répertoire courant"""
-    response = requests.get(img)
+    response = session.get(img)
     file_img = os.path.join(slugify(categ, separator="_"), nom_img)
     with open(file_img, "wb") as f:
         f.write(response.content)
+
+
+def load_csv(csv_path: str, books_datas: list):
+    """Fonction qui reçoit en paramètre le chemin du fichier CSV à créer et la liste des dictionnaires contenant les données à écrire, 
+    et qui écrit ces données dans le fichier CSV"""
+    champs = ['product_page_url', 'universal_product_code', 'title', 'price_including_tax', 'price_excluding_tax',
+              'number_available', 'product_description', 'category', 'review_rating', 'image_url']
+    with open(csv_path, mode='w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=champs)
+        writer.writeheader()
+        writer.writerows(books_datas)
 
 
 def convert_rating(txt):
@@ -82,39 +93,35 @@ def scrape_url(url_to_scrape) -> dict:
 
 def categ_to_scrape(base_url, categ):
     """Fonction qui parcourt toutes les pages d'une catégorie et extrait les informations de chaque livre"""
-    filecsv = os.path.join(slugify(categ, separator="_"), f'{categ}.csv')
-    datas = []
-    champs = ['product_page_url', 'universal_product_code', 'title', 'price_including_tax', 'price_excluding_tax',
-              'number_available', 'product_description', 'category', 'review_rating', 'image_url']
-    with open(filecsv, mode='w', newline='') as f:
-        # URL de la première page de la catégorie de livres
-        url = base_url + 'index.html'
+    csv_path = os.path.join(slugify(categ, separator="_"), f'{categ}.csv')
+    books_datas = []
 
-        basik_url = 'https://books.toscrape.com/catalogue'
+    # URL de la première page de la catégorie de livres
+    url = base_url + 'index.html'
 
-        # Boucle pour parcourir toutes les pages de livres
-        while url:
+    basik_url = 'https://books.toscrape.com/catalogue'
 
-            soup = bs_get(url)
+    # Boucle pour parcourir toutes les pages de livres
+    while url:
 
-            # Récupération des informations de chaque livre sur la page
-            books = soup.select('article.product_pod')
-            for book in books:
-                url_book = basik_url + book.h3.a['href'][8:]
-                data = scrape_url(url_book)
-                datas.append(data)
+        soup = bs_get(url)
 
-            # Récupération du lien de la page suivante
-            next_page = soup.select_one('li.next a')
-            if next_page:
-                # Construction de l'URL absolue de la page suivante
-                url = base_url + next_page['href']
-            else:
-                url = None
+        # Récupération des informations de chaque livre sur la page
+        books = soup.select('article.product_pod')
+        for book in books:
+            url_book = basik_url + book.h3.a['href'][8:]
+            data = scrape_url(url_book)
+            books_datas.append(data)
 
-        writer = csv.DictWriter(f, fieldnames=champs)
-        writer.writeheader()
-        writer.writerows(datas)
+        # Récupération du lien de la page suivante
+        next_page = soup.select_one('li.next a')
+        if next_page:
+            # Construction de l'URL absolue de la page suivante
+            url = base_url + next_page['href']
+        else:
+            url = None
+
+    load_csv(csv_path, books_datas)
 
 
 def main():
