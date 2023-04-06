@@ -60,6 +60,8 @@ def convert_stock(txt):
 def scrape_url(url_to_scrape) -> dict:
     """Fonction qui reçoit une URL en paramètre et qui retourne un dictionnaire contenant l'ensemble des éléments demandés"""
     soup = bs_get(url_to_scrape)
+    if soup is None:
+        exit()
     datas = {}
     # Recuperation des different donnes demandées et stockage dans des variables
     datas['product_page_url'] = url_to_scrape
