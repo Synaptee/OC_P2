@@ -9,6 +9,7 @@ session = requests.session()
 
 
 def bs_get(url_to_scrape):
+    """Fonction qui reçoit une URL en paramètre et qui retourne un objet BeautifulSoup"""
     try:
         response = session.get(url_to_scrape)
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -26,11 +27,13 @@ def load_img(img, nom_img, categ):
 
 
 def convert_rating(txt):
+    """Fonction qui convertit le texte de la classe de l'élément HTML en nombre"""
     ratings = {'One': 1, 'Two': 2, 'Three': 3, 'Four': 4, 'Five': 5}
     return ratings.get(txt, 0)
 
 
 def convert_stock(txt):
+    """Fonction qui convertit le texte de la quantité en stock en nombre"""
     stock = ""
     for char in txt:
         if char.isdigit():
@@ -78,6 +81,7 @@ def scrape_url(url_to_scrape) -> dict:
 
 
 def categ_to_scrape(base_url, categ):
+    """Fonction qui parcourt toutes les pages d'une catégorie et extrait les informations de chaque livre"""
     filecsv = os.path.join(slugify(categ, separator="_"), f'{categ}.csv')
     datas = []
     champs = ['product_page_url', 'universal_product_code', 'title', 'price_including_tax', 'price_excluding_tax',
@@ -114,6 +118,7 @@ def categ_to_scrape(base_url, categ):
 
 
 def main():
+    """Fonction principale"""
     base_url = 'http://books.toscrape.com/'
     soup = bs_get(base_url)
     # Récupération des liens de chaque catégorie sur la page d'accueil
