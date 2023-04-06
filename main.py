@@ -24,6 +24,7 @@ def load_img(img, nom_img, categ):
     file_img = os.path.join(slugify(categ, separator="_"), nom_img)
     with open(file_img, "wb") as f:
         f.write(response.content)
+    return file_img
 
 
 def load_csv(csv_path: str, books_datas: list):
@@ -37,13 +38,13 @@ def load_csv(csv_path: str, books_datas: list):
         writer.writerows(books_datas)
 
 
-def convert_rating(txt):
+def transform_rating(txt: str) -> int:
     """Fonction qui convertit le texte de la classe de l'élément HTML en nombre"""
     ratings = {'One': 1, 'Two': 2, 'Three': 3, 'Four': 4, 'Five': 5}
     return ratings.get(txt, 0)
 
 
-def convert_stock(txt: str) -> int:
+def transform_stock(txt: str) -> int:
     """Fonction qui convertit le texte de la quantité en stock en nombre"""
     stock = ""
     for char in txt:
@@ -57,7 +58,7 @@ def convert_stock(txt: str) -> int:
         return 0
 
 
-def scrape_url(url_to_scrape: str) -> dict:
+def extract_book_infos(url_to_scrape: str) -> dict:
     """Fonction qui reçoit une URL en paramètre et qui retourne un dictionnaire contenant
     l'ensemble des éléments demandés"""
     soup = bs_get(url_to_scrape)
@@ -72,7 +73,8 @@ def scrape_url(url_to_scrape: str) -> dict:
     datas['price_including_tax'] = soup.find('th', string='Price (incl. tax)').find_next_sibling('td').get_text()
     datas['price_excluding_tax'] = soup.find('th', string='Price (excl. tax)').find_next_sibling('td').get_text()
 
-    datas['number_available'] = convert_stock(soup.find('th', string='Availability').find_next_sibling('td').get_text())
+    datas['number_available'] = transform_stock(
+        soup.find('th', string='Availability').find_next_sibling('td').get_text())
     try:
         datas['product_description'] = soup.find('div', id='product_description').find_next('p').get_text()
     except:
@@ -81,20 +83,19 @@ def scrape_url(url_to_scrape: str) -> dict:
     datas['category'] = category
     rating_init = soup.find('p', class_='star-rating')  # Renvoie tout le code HTML
     rating_class = rating_init['class']  # Je récupère le nom de la classe qui est en fait une liste
-    datas['review_rating'] = convert_rating(rating_class[1])  # Je récupère le second élément de la liste
+    datas['review_rating'] = transform_rating(rating_class[1])  # Je récupère le second élément de la liste
     img = 'http://books.toscrape.com/' + soup.select('img')[0]['src']
-    datas['image_url'] = img
 
     nom_img = slugify(title, separator="_") + ".jpg"
     try:
-        load_img(img, nom_img, category)
+        datas['image_url'] = load_img(img, nom_img, category)
     except Exception as err:
         print(f"Une erreur est survenue dans le téléchargement de l'image: {err} ")
 
     return datas
 
 
-def get_books_from_category(base_url: str, category_name: str):
+def extract_books_from_category(base_url: str, category_name: str):
     """Fonction qui parcourt toutes les pages d'une catégorie et extrait les informations de chaque livre"""
     print(f'Récupération de la catégorie {category_name} en cours. Veuillez patitenter...')
     csv_path = os.path.join(slugify(category_name, separator="_"), f'{category_name}.csv')
@@ -112,7 +113,7 @@ def get_books_from_category(base_url: str, category_name: str):
         books = soup.select('article.product_pod')
         for book in books:
             url_book = basik_url + book.h3.a['href'][8:]
-            data = scrape_url(url_book)
+            data = extract_book_infos(url_book)
             books_datas.append(data)
 
         # Récupération du lien de la page suivante
@@ -142,7 +143,7 @@ def main():
             directory.mkdir(parents=True, exist_ok=True)
 
         url = base_url + category_link['href']
-        get_books_from_category(url[:-10], category_name)
+        extract_books_from_category(url[:-10], category_name)
 
 
 if __name__ == "__main__":
