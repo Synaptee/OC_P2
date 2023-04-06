@@ -93,6 +93,7 @@ def scrape_url(url_to_scrape) -> dict:
 
 def categ_to_scrape(base_url, categ):
     """Fonction qui parcourt toutes les pages d'une catégorie et extrait les informations de chaque livre"""
+    print(f'Récupération de la catégorie {categ} en cours. Veuillez patitenter...')
     csv_path = os.path.join(slugify(categ, separator="_"), f'{categ}.csv')
     books_datas = []
 
@@ -122,6 +123,7 @@ def categ_to_scrape(base_url, categ):
             url = None
 
     load_csv(csv_path, books_datas)
+    print(f'Catégorie {categ} récupérée.')
 
 
 def main():
