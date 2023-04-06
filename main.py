@@ -11,7 +11,7 @@ session = requests.session()
 def bs_get(url_to_scrape):
     try:
         response = session.get(url_to_scrape)
-        soup = BeautifulSoup(response.text, 'html.parser')
+        soup = BeautifulSoup(response.content, 'html.parser')
         return soup
     except Exception as err:
         print(f"Une erreur est survenue : {err} ")
