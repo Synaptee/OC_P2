@@ -17,6 +17,7 @@ Ce programme est conçu pour extraire des éléments spécifiques du site Web ht
 
 Nous vous conseillons de créer un environnement virtuel afin d'y installer les dépendances nécessaires et exécuter votre code. 
 Pour créer un environnement virtuel (nommé venv par convention), vous pouvez utiliser la commande : `python3 -m venv .venv`.
+
 Pensez bien à activer vote environnement virtuel avec la commande : `. .venv/bin/activate`
 
 # Installation
